@@ -7,8 +7,8 @@ import JobList from './role admin/JobList';
 import Dashboard from './role admin/Dashboard';
 import TechnicianDashboard from './role technician/TechnicianDashboard';
 import AdminCreateJobPage from './role admin/AdminCreateJobPage';
-import TechnicianWorkSheetForm from './role technician/TechnicianWorkSheetForm';
-import TechnicianWorkSheetPrint from './role technician/TechnicianWorkSheetPrint';
+// import TechnicianWorkSheetForm from './role technician/TechnicianWorkSheetForm';
+// import TechnicianWorkSheetPrint from './role technician/TechnicianWorkSheetPrint';
 import JobDetail from './role admin/JobDetail';
 import Typejob from './role admin/Typejob';
 import Settings from './role admin/Settings';
@@ -16,6 +16,7 @@ import ExecDashboard from './role executive/ExecDashboard';
 import ExecSettings from './role executive/ExecSettings';
 import TechnicianJobList from './role technician/TechnicianJobList';
 import TechnicianJobDetail from './role technician/TechnicianJobDetail';
+import TechnicianSetting from './role technician/TechnicianSetting';
 
 const RoleRedirect = () => {
   const { user } = useAuth();
@@ -65,9 +66,11 @@ function App() {
             <Route path="/tech/dashboard" element={<TechnicianDashboard />} />
             <Route path="/technician/jobs" element={<TechnicianJobList />} />
             <Route path="/technician/job/:id" element={<TechnicianJobDetail />} />
+            <Route path="/tech/settings" element={<TechnicianSetting />} />
+            <Route path="/technician/settings" element={<TechnicianSetting />} />
             <Route path="/tech/create-job" element={<AdminCreateJobPage />} />
-            <Route path="/tech/work-sheet" element={<TechnicianWorkSheetForm />} />
-            <Route path="/tech/work-sheet/print" element={<TechnicianWorkSheetPrint />} />
+            {/* <Route path="/tech/work-sheet" element={<TechnicianWorkSheetForm />} />
+            <Route path="/tech/work-sheet/print" element={<TechnicianWorkSheetPrint />} /> */}
           </Route>
 
           <Route element={<ProtectedLayout requiredRole="executive" />}>

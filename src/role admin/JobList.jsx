@@ -3,6 +3,7 @@ import './JobList.css';
 import { useJobs } from '../context/JobsContext';
 import { usePeople } from '../context/PeopleContext';
 import { useNavigate } from 'react-router-dom';
+import { loadJobs, saveJobs } from '../utils/jobStorage';
 
 const columns = [
   { key: 'new', title: 'New Jobs', color: '#4785FC', hover: '#4785FC' },
@@ -15,9 +16,10 @@ const columns = [
 ];
 
 export default function JobList() {
-  const { jobs } = useJobs();
+  const { jobs: ctxJobs } = useJobs();
   const { technicians: peopleTechs, getTechniciansByIds } = usePeople();
   const navigate = useNavigate();
+  const [jobs, setJobs] = useState(() => loadJobs());
   const [hoveredJob, setHoveredJob] = useState(null);
   const hoverTimer = useRef(null);
   const [search, setSearch] = useState('');
@@ -38,6 +40,15 @@ export default function JobList() {
     () => peopleTechs.map((t) => t.name).filter(Boolean),
     [peopleTechs],
   );
+
+  useEffect(() => {
+    const fromStorage = loadJobs();
+    const source = ctxJobs && ctxJobs.length ? ctxJobs : fromStorage;
+    if (ctxJobs && ctxJobs.length) {
+      saveJobs(ctxJobs);
+    }
+    setJobs(source);
+  }, [ctxJobs]);
 
   const filteredJobs = useMemo(() => {
     const matchDateRange = (job) => {

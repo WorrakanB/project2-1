@@ -1,235 +1,270 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useJobs } from '../context/JobsContext';
-import { loadJobs, saveJobs } from '../utils/jobStorage';
+import { getJobsForTechnician, loadJobs, mergeJobsById, saveJobs } from '../utils/jobStorage';
 import './TechnicianJobList.css';
 
+const columns = [
+  { key: 'new', title: 'New Jobs', color: '#019B5F', hover: '#019B5F' },
+  { key: 'in_progress', title: 'On Progress', color: '#ac7cf8', hover: '#ac7cf8' },
+  { key: 'pending', title: 'Pending', color: '#f97316', hover: '#f97316' },
+  { key: 'rejected', title: 'Reject', color: '#fec667', hover: '#fec667' },
+  { key: 'done', title: 'Done', color: '#019b5f', hover: '#019b5f' },
+  { key: 'canceled', title: 'Canceled', color: '#fe5b48', hover: '#fe5b48' },
+];
+
+const statusOptions = [
+  { value: 'all', label: 'ทั้งหมด' },
+  { value: 'new', label: 'New' },
+  { value: 'in_progress', label: 'กำลังทำ' },
+  { value: 'pending', label: 'รอดำเนินการ' },
+  { value: 'rejected', label: 'ถูกตีกลับ' },
+  { value: 'returned', label: 'ต้องแก้ไข' },
+  { value: 'done', label: 'เสร็จแล้ว' },
+  { value: 'canceled', label: 'ยกเลิก' },
+];
+
+const typeOptions = [
+  { value: 'all', label: 'ทุกประเภท' },
+  { value: 'MA', label: 'Maintenance Agreement (MA)' },
+  { value: 'Per-call', label: 'Per-call' },
+  { value: 'Per Call', label: 'Per Call' },
+  { value: 'Project', label: 'Project' },
+];
+
+const priorityOptions = [
+  { value: 'all', label: 'ทุกความเร่งด่วน' },
+  { value: 'สูง', label: 'สูง' },
+  { value: 'กลาง', label: 'กลาง' },
+  { value: 'ต่ำ', label: 'ต่ำ' },
+];
+
 const rangeOptions = [
-  { key: 'week', label: 'สัปดาห์นี้' },
-  { key: 'month', label: 'เดือนนี้' },
-  { key: 'all', label: 'ทั้งหมด' },
+  { value: 'week', label: 'สัปดาห์นี้' },
+  { value: 'month', label: 'เดือนนี้' },
+  { value: 'all', label: 'ทั้งหมด' },
 ];
-
-const statusColumns = [
-  { key: 'today', title: 'งานวันนี้' },
-  { key: 'in_progress', title: 'กำลังดำเนินการ' },
-  { key: 'returned', title: 'ถูกตีกลับ/ต้องแก้' },
-  { key: 'late', title: 'ล่าช้า' },
-  { key: 'done', title: 'งานเสร็จแล้ว' },
-];
-
-const priorityTone = (priority) => {
-  if (!priority) return 'neutral';
-  if (priority.includes('สูง')) return 'high';
-  if (priority.includes('กลาง')) return 'medium';
-  return 'low';
-};
 
 export default function TechnicianJobList() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { jobs: ctxJobs } = useJobs();
 
+  const [jobs, setJobs] = useState([]);
+  const [hoveredJob, setHoveredJob] = useState(null);
+  const hoverTimer = useRef(null);
   const [search, setSearch] = useState('');
-  const [range, setRange] = useState('week');
+  const [filters, setFilters] = useState({
+    status: 'all',
+    type: 'all',
+    priority: 'all',
+    range: 'all',
+  });
+  const [page, setPage] = useState(0);
 
-  // รวมข้อมูลจาก storage และ context (admin เพิ่งสร้างใหม่จะอยู่ใน ctx)
-  const mergedJobs = useMemo(() => {
-    const stored = loadJobs();
-    const byId = new Map();
-    stored.forEach((j) => byId.set(j.id, j));
-    ctxJobs.forEach((j) => byId.set(j.id, j));
-    return Array.from(byId.values());
-  }, [ctxJobs]);
+  const pageSize = 4;
 
-  // sync context -> storage เพื่อให้ techniciain เห็นงานล่าสุดจาก admin
+  // แสดงเฉพาะใบงานของช่างพีระ (tech-03)
+  const techCandidates = useMemo(
+    () => new Set(['tech-03', 'พีระ'].map((t) => String(t).toLowerCase())),
+    [],
+  );
+
+  // โหลดงานของช่างจาก localStorage + context
   useEffect(() => {
-    if (ctxJobs && ctxJobs.length) {
-      saveJobs(ctxJobs);
+    if (!user) {
+      setJobs([]);
+      return;
     }
-  }, [ctxJobs]);
-  // รวม candidate id ของช่าง (บาง env ใช้ username, บาง env ใช้รหัส tech-01)
-  const techCandidates = useMemo(() => {
-    const base = [user?.id, user?.username, user?.name].filter(Boolean);
-    // เผื่อชื่อ user เป็น "tech" ให้ลองจับคู่กับ tech-01..tech-04
-    if (user?.username === 'tech') {
-      base.push('tech-01', 'tech-02', 'tech-03', 'tech-04');
+    const merged = mergeJobsById(ctxJobs, loadJobs());
+    if (merged.length) {
+      saveJobs(merged);
     }
-    return new Set(base.map((t) => String(t).toLowerCase()));
-  }, [user]);
-
-  const isMine = (job) => {
-    const main = String(job?.mainTechnicianId || job?.mainTechnician || '').toLowerCase();
-    const assistants = [
-      ...(job?.assistantTechnicianIds || []),
-      ...(job?.technicians || []),
-    ].map((t) => String(t).toLowerCase());
-
-    if (techCandidates.has(main)) return true;
-    return assistants.some((id) => techCandidates.has(id));
-  };
-
-  const filteredByOwner = useMemo(() => mergedJobs.filter((job) => isMine(job)), [mergedJobs, techCandidates]);
-
-  const filteredBySearch = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return filteredByOwner;
-    return filteredByOwner.filter((job) => {
-      const haystack = [
-        job.id,
-        job.title,
-        job.customer,
-        job.address,
-        job.requirementDetail,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
-    });
-  }, [filteredByOwner, search]);
+    const myJobs = getJobsForTechnician(Array.from(techCandidates), merged);
+    setJobs(myJobs);
+  }, [ctxJobs, techCandidates, user]);
 
   const filteredJobs = useMemo(() => {
     const now = new Date();
     const rangeStart = (() => {
-      if (range === 'week') return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      if (range === 'month') return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      if (filters.range === 'week') return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      if (filters.range === 'month') return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       return null;
     })();
 
-    return filteredBySearch.filter((job) => {
-      if (!rangeStart) return true;
-      const openedAt = job.openedAt ? new Date(job.openedAt) : null;
-      const due = job.dueDate ? new Date(job.dueDate) : null;
-      const inRange =
-        (openedAt && openedAt >= rangeStart) ||
-        (due && due >= rangeStart);
-      return inRange;
-    });
-  }, [filteredBySearch, range]);
+    return jobs
+      .filter((job) => {
+        if (!search.trim()) return true;
+        const q = search.toLowerCase();
+        return (
+          job.id?.toLowerCase().includes(q) ||
+          (job.title || '').toLowerCase().includes(q) ||
+          (job.customer || '').toLowerCase().includes(q) ||
+          (job.address || '').toLowerCase().includes(q) ||
+          (job.requirementDetail || '').toLowerCase().includes(q)
+        );
+      })
+      .filter((job) => {
+        if (filters.status === 'all') return true;
+        const status = (job.status || '').toLowerCase();
+        return status === filters.status || status === filters.status.replace('_', '');
+      })
+      .filter((job) => {
+        if (filters.type === 'all') return true;
+        return (job.type || '').toLowerCase().includes(filters.type.toLowerCase());
+      })
+      .filter((job) => {
+        if (filters.priority === 'all') return true;
+        const value = (job.priority || '').toLowerCase();
+        if (filters.priority === 'สูง') return value.includes('สูง') || value.includes('high');
+        if (filters.priority === 'กลาง') return value.includes('กลาง') || value.includes('medium');
+        if (filters.priority === 'ต่ำ') return value.includes('ต่ำ') || value.includes('low');
+        return true;
+      })
+      .filter((job) => {
+        if (!rangeStart) return true;
+        const openedAt = job.openedAt ? new Date(job.openedAt) : null;
+        const due = job.dueDate ? new Date(job.dueDate) : null;
+        const inRange =
+          (openedAt && openedAt >= rangeStart) ||
+          (due && due >= rangeStart);
+        return inRange;
+      });
+  }, [filters, jobs, search]);
 
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const maxPage = Math.max(Math.ceil(columns.length / pageSize) - 1, 0);
+  const visibleColumns = columns.slice(page * pageSize, page * pageSize + pageSize);
 
-  const columnJobs = useMemo(() => {
-    const cols = {
-      today: [],
-      in_progress: [],
-      returned: [],
-      late: [],
-      done: [],
-    };
+  useEffect(() => {
+    setPage((prev) => Math.min(prev, maxPage));
+  }, [maxPage]);
 
-    filteredJobs.forEach((job) => {
-      const dueDate = job.dueDate ? new Date(job.dueDate) : null;
-      const dueKey = dueDate ? dueDate.toISOString().slice(0, 10) : '';
-      const isClosed = job.status === 'done' || job.status === 'canceled';
-      const isLate =
-        dueDate && dueDate.getTime() < Date.now() && !isClosed;
+  const handleHoverStart = (job, color) => {
+    hoverTimer.current = setTimeout(() => {
+      setHoveredJob({ ...job, color });
+    }, 500);
+  };
 
-      if (!isClosed && dueKey === todayKey) {
-        cols.today.push(job);
-      }
-
-      if (job.status === 'in_progress') {
-        cols.in_progress.push(job);
-      }
-
-      if (job.status === 'rejected' || job.status === 'returned') {
-        cols.returned.push(job);
-      }
-
-      if (isLate) {
-        cols.late.push(job);
-      }
-
-      if (job.status === 'done') {
-        cols.done.push(job);
-      }
-    });
-
-    return cols;
-  }, [filteredJobs, todayKey]);
-
-  const renderCard = (job) => {
-    const dueText = job.dueDate
-      ? new Date(job.dueDate).toLocaleDateString('th-TH')
-      : '-';
-    return (
-      <div
-        key={job.id}
-        className="tech-job-card"
-        role="button"
-        tabIndex={0}
-        onClick={() => navigate(`/technician/job/${encodeURIComponent(job.id)}`)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            navigate(`/technician/job/${encodeURIComponent(job.id)}`);
-          }
-        }}
-      >
-        <div className="tech-job-id">{job.id}</div>
-        <p className="tech-job-customer">{job.customer || '-'}</p>
-        <p className="tech-job-title">{job.title || job.requirementDetail || '-'}</p>
-        <div className="tech-job-badges">
-          <span className={`tech-priority ${priorityTone(job.priority)}`}>
-            {job.priority || 'ไม่ระบุ'}
-          </span>
-          <span className="tech-pill neutral">กำหนดส่ง: {dueText}</span>
-          <span className="tech-pill">{job.status || '-'}</span>
-        </div>
-      </div>
-    );
+  const handleHoverEnd = () => {
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+    }
+    hoverTimer.current = null;
+    setHoveredJob(null);
   };
 
   return (
-    <div className="tech-joblist-page">
-      <header className="tech-joblist-header">
-        <div>
-          <p className="eyebrow">Technician</p>
-          <h1>งานของฉัน</h1>
+    <div className="joblist-page tech-skin">
+      <div className="joblist-toolbar">
+        <div className="search-box">
+          <input
+            className="search-input"
+            placeholder="Search by ID, title, customer..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-      </header>
+        <div className="toolbar-actions" />
+      </div>
 
-      <section className="tech-filter-bar">
-        <input
-          type="text"
-          className="tech-search"
-          placeholder="ค้นหาใบงาน (ID / ชื่องาน / ลูกค้า / ที่อยู่)"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select
-          className="tech-select"
-          value={range}
-          onChange={(e) => setRange(e.target.value)}
-        >
-          {rangeOptions.map((opt) => (
-            <option key={opt.key} value={opt.key}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </section>
+      <section className="joblist-board">
+        <div className="board-header">
+          <div>
+            <p className="board-eyebrow">Overview</p>
+            <h1 className="board-title">Joblist (Technician)</h1>
+          </div>
+        </div>
+        <div className="job-columns-wrap">
+          <button
+            type="button"
+            className="page-button left"
+            disabled={page === 0}
+            onClick={() => setPage((p) => Math.max(p - 1, 0))}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className="page-button right"
+            disabled={page === maxPage}
+            onClick={() => setPage((p) => Math.min(p + 1, maxPage))}
+          >
+            ›
+          </button>
+          <div className="job-columns">
+            {visibleColumns.map((column) => {
+              const jobsByStatus = filteredJobs.filter((job) => {
+                if (column.key === 'rejected') {
+                  return job.status === 'rejected' || job.status === 'returned';
+                }
+                if (column.key === 'pending') {
+                  return job.status === 'pending' || job.status === 'pending_review';
+                }
+                return job.status === column.key;
+              });
+              return (
+                <div
+                  className="job-column"
+                  key={column.key}
+                  style={{ borderColor: column.color, background: `${column.color}1A` }}
+                >
+                  <div className="job-column-head">
+                    <div>
+                      <p className="job-column-label">{column.title}</p>
+                      <p className="job-column-count">{jobsByStatus.length} positions</p>
+                    </div>
+                    <div className="job-column-dot" style={{ background: column.color }} />
+                  </div>
+                  <div className="job-column-cards">
+                    {jobsByStatus.map((job) => (
+                      <article
+                        className="job-card"
+                        key={job.id}
+                        style={{ '--card-hover': column.hover, '--card-border': column.color }}
+                        onMouseEnter={() => handleHoverStart(job, column.color)}
+                        onMouseLeave={handleHoverEnd}
+                      >
+                        <div className="job-card-body">
+                          <p className="job-card-title">{job.id}</p>
+                          <p className="job-card-title">{job.title}</p>
+                          <p className="job-card-desc">{job.desc || job.customer || job.requirementDetail}</p>
+                          <div className="job-card-meta">
+                            <span className="job-card-badge">{job.badge || job.type}</span>
+                            <span className="job-card-meta-text">
+                              Due: {job.dueDate ? new Date(job.dueDate).toLocaleDateString('th-TH') : '-'}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="job-card-link"
+                          onClick={() => navigate(`/technician/job/${encodeURIComponent(job.id)}`)}
+                        >
+                        </button>
+                      </article>
+                    ))}
+                    {jobsByStatus.length === 0 && <p className="tech-empty">ไม่มีงานในคอลัมน์นี้</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-      <section className="tech-board">
-        {statusColumns.map((col) => (
-          <div key={col.key} className="tech-column">
-            <div className="tech-column-header">
-              <p className="tech-column-title">
-                {col.title} ({columnJobs[col.key]?.length || 0})
+        {hoveredJob && (
+          <div className="job-hover-detail" style={{ borderColor: hoveredJob.color }}>
+            <div className="job-hover-header">Detail</div>
+            <div className="job-hover-body">
+              <p className="job-hover-title">{hoveredJob.title}</p>
+              <p className="job-hover-desc">
+                {hoveredJob.desc ||
+                  hoveredJob.requirementDetail ||
+                  'รายละเอียดใบงาน'}
               </p>
             </div>
-            <div className="tech-column-body">
-              {columnJobs[col.key]?.length ? (
-                columnJobs[col.key].map(renderCard)
-              ) : (
-                <p className="tech-empty">ไม่มีงานในคอลัมน์นี้</p>
-              )}
-            </div>
           </div>
-        ))}
+        )}
       </section>
     </div>
   );

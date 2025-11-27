@@ -16,9 +16,9 @@ const adminNav = [
 const techNav = [
   { label: 'Dashboard', to: '/tech/dashboard', badge: null, icon: dashboardIcon },
   { label: 'Joblist', to: '/technician/jobs', badge: null, icon: joblistLogo },
-  { label: 'Create Job', to: '/tech/create-job', badge: null, icon: createJobIcon },
-  { label: 'Work Sheet', to: '/tech/work-sheet', badge: null },
-  { label: 'Print Work Sheet', to: '/tech/work-sheet/print', badge: null },
+  { label: 'Setting', to: '/tech/settings', badge: null, icon: settingIcon },
+  // { label: 'Work Sheet', to: '/tech/work-sheet', badge: null },
+  // { label: 'Print Work Sheet', to: '/tech/work-sheet/print', badge: null },
 ];
 
 const executiveNav = [

@@ -5,8 +5,6 @@ import { useJobs } from '../context/JobsContext';
 import { loadJobs, saveJobs } from '../utils/jobStorage';
 import './TechnicianDashboard.css';
 
-const filters = ['สถานะงานของฉัน', 'ประเภทงาน', 'ความเร่งด่วน', 'ช่วงเวลา'];
-
 const polarToCartesian = (cx, cy, r, angleDeg) => {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
@@ -116,12 +114,9 @@ export default function TechnicianDashboard() {
 
   // candidate id ของช่าง
   const techCandidates = useMemo(() => {
-    const base = [user?.id, user?.username, user?.name].filter(Boolean);
-    if (user?.username === 'tech') {
-      base.push('tech-01', 'tech-02', 'tech-03', 'tech-04');
-    }
-    return new Set(base.map((t) => String(t).toLowerCase()));
-  }, [user]);
+    // Force dashboard to show only technician พีระ (tech-03)
+    return new Set(['tech-03', 'พีระ'].map((t) => String(t).toLowerCase()));
+  }, []);
 
   const isMine = (job) => {
     const main = String(job?.mainTechnicianId || job?.mainTechnician || '').toLowerCase();
@@ -238,13 +233,7 @@ export default function TechnicianDashboard() {
         </header>
 
         <section className="tech-filter-bar">
-          <div className="tech-filter-group">
-            {filters.map((f) => (
-              <button key={f} className="tech-filter-chip">
-                {f} ▾
-              </button>
-            ))}
-          </div>
+          <div className="tech-filter-group" />
           <div className="tech-filter-range">
             <button
               className={`tech-filter-pill ${range === 'week' ? 'active' : ''}`}

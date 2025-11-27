@@ -1,5 +1,9 @@
 import { createContext, useContext, useMemo, useState, useEffect } from 'react';
-
+import {
+  loadJobs,
+  saveJobs,
+  mergeJobsById,
+} from '../utils/jobStorage';
 
 const JobsContext = createContext(null);
 
@@ -259,8 +263,6 @@ const initialJobs = [
   },
 ];
 
-const STORAGE_KEY = 'jobs-data-v1';
-
 const normalizeDates = (job) => {
   if (!job) return job;
   const dateFields = [
@@ -283,29 +285,17 @@ const normalizeDates = (job) => {
 
 export function JobsProvider({ children }) {
   const [jobs, setJobs] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const byId = new Map();
-        initialJobs.forEach((job) => byId.set(job.id, normalizeDates(job)));
-        parsed.forEach((job) => {
-          if (job && job.id) byId.set(job.id, job);
-        });
-        return Array.from(byId.values()).map(normalizeDates);
-      }
-    } catch (e) {
-      console.error('Failed to parse jobs from localStorage', e);
+    const seeded = initialJobs.map(normalizeDates);
+    const stored = loadJobs();
+    if (stored && stored.length) {
+      return mergeJobsById(stored, seeded);
     }
-    return initialJobs.map(normalizeDates);
+    saveJobs(seeded);
+    return seeded;
   });
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
-    } catch (e) {
-      console.error('Failed to save jobs to localStorage', e);
-    }
+    saveJobs(jobs);
   }, [jobs]);
 
   const updateJobStatus = (id, newStatus) => {

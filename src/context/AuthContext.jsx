@@ -13,7 +13,7 @@ const USERS = [
     username: 'tech',
     password: 'tech123',
     role: 'technician',
-    name: 'Technician User',
+    name: 'พีระ',
   },
   {
     username: 'exec',
