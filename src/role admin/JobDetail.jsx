@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useJobs } from "../context/JobsContext";
 import { usePeople } from "../context/PeopleContext";
@@ -45,6 +45,20 @@ export default function JobDetail() {
     () => jobs.find((j) => j.id === decodedId),
     [jobs, decodedId]
   );
+  const isTechnician = user?.role === "technician";
+  const [workLog, setWorkLog] = useState({
+    precheck: job?.techPrecheck || job?.workLogBefore || "",
+    steps: job?.techSteps || job?.workLogAction || "",
+    testResult: job?.techTestResult || job?.workLogTest || "",
+    partsUsed: job?.techPartsUsed || "",
+  });
+  const [result, setResult] = useState({
+    summary: job?.techResultSummary || job?.resultSummary || "",
+    nextAction: job?.techNextAction || job?.followUpTask || "",
+    status:
+      job?.techResultStatus || job?.supervisorCloseStatus || job?.resultStatus || "",
+  });
+  const [saveMessage, setSaveMessage] = useState("");
 
   const handleCancelJob = () => {
     if (!job || user?.role !== "admin") return;
@@ -58,6 +72,50 @@ export default function JobDetail() {
     setCancelled(true);
     setShowCancelConfirm(false);
     setShowCancelSuccess(true);
+  };
+
+  useEffect(() => {
+    if (!job) return;
+    setWorkLog({
+      precheck: job.techPrecheck || job.workLogBefore || "",
+      steps: job.techSteps || job.workLogAction || "",
+      testResult: job.techTestResult || job.workLogTest || "",
+      partsUsed: job.techPartsUsed || "",
+    });
+    setResult({
+      summary: job.techResultSummary || job.resultSummary || "",
+      nextAction: job.techNextAction || job.followUpTask || "",
+      status:
+        job.techResultStatus || job.supervisorCloseStatus || job.resultStatus || "",
+    });
+  }, [job]);
+
+  const handleSaveTechnicianSection = () => {
+    if (!job || !isTechnician) return;
+    if (job.status === "done" || job.status === "canceled") return;
+    if (!workLog.precheck && !workLog.steps) {
+      window.alert("กรุณากรอกอย่างน้อยขั้นตอนการตรวจสอบหรือการแก้ไข");
+      return;
+    }
+    updateJob(job.id, {
+      ...job,
+      techPrecheck: workLog.precheck,
+      workLogBefore: workLog.precheck,
+      techSteps: workLog.steps,
+      workLogAction: workLog.steps,
+      techTestResult: workLog.testResult,
+      workLogTest: workLog.testResult,
+      techPartsUsed: workLog.partsUsed,
+      techResultSummary: result.summary,
+      resultSummary: result.summary,
+      techNextAction: result.nextAction,
+      followUpTask: result.nextAction,
+      techResultStatus: result.status,
+      resultStatus: result.status,
+      techLastUpdateAt: new Date().toISOString(),
+    });
+    setSaveMessage("บันทึกสำเร็จ");
+    setTimeout(() => setSaveMessage(""), 2500);
   };
 
   const resolveTechName = (value) => {
@@ -108,6 +166,7 @@ export default function JobDetail() {
   const mapHref = iframeSrc || mapLink || formatMapLink(job.location);
   const displayStatus = cancelled ? "canceled" : job.status || "-";
   const displayCloseStatus = cancelled ? "ยกเลิก" : job.supervisorCloseStatus || "-";
+  const isClosed = job.status === "done" || job.status === "canceled";
 
   return (
     <div className="job-detail-page">
@@ -312,21 +371,86 @@ export default function JobDetail() {
             <p className="job-detail-title">
               ส่วนที่5:บันทึกการดำเนินงานของช่าง
             </p>
+            {isClosed && (
+              <p className="field-value closed-note">
+                ใบงานปิดแล้ว ไม่สามารถแก้ไขบันทึกได้
+              </p>
+            )}
             <div className="field">
               <p className="field-label">
                 ขั้นตอนการตรวจสอบ / สภาพก่อนดำเนินการ
               </p>
-              <p className="field-value">{job.workLogBefore || "-"}</p>
+              {isTechnician ? (
+                <textarea
+                  className="field-input"
+                  value={workLog.precheck}
+                  onChange={(e) =>
+                    setWorkLog((prev) => ({ ...prev, precheck: e.target.value }))
+                  }
+                  rows={3}
+                  disabled={isClosed}
+                />
+              ) : (
+                <p className="field-value">
+                  {job.techPrecheck || job.workLogBefore || "-"}
+                </p>
+              )}
             </div>
             <div className="field">
               <p className="field-label">
                 ขั้นตอนการแก้ไข / ปรับปรุง / ติดตั้ง
               </p>
-              <p className="field-value">{job.workLogAction || "-"}</p>
+              {isTechnician ? (
+                <textarea
+                  className="field-input"
+                  value={workLog.steps}
+                  onChange={(e) =>
+                    setWorkLog((prev) => ({ ...prev, steps: e.target.value }))
+                  }
+                  rows={3}
+                  disabled={isClosed}
+                />
+              ) : (
+                <p className="field-value">
+                  {job.techSteps || job.workLogAction || "-"}
+                </p>
+              )}
             </div>
             <div className="field">
               <p className="field-label">การทดสอบหลังดำเนินการ</p>
-              <p className="field-value">{job.workLogTest || "-"}</p>
+              {isTechnician ? (
+                <textarea
+                  className="field-input"
+                  value={workLog.testResult}
+                  onChange={(e) =>
+                    setWorkLog((prev) => ({ ...prev, testResult: e.target.value }))
+                  }
+                  rows={3}
+                  disabled={isClosed}
+                />
+              ) : (
+                <p className="field-value">
+                  {job.techTestResult || job.workLogTest || "-"}
+                </p>
+              )}
+            </div>
+            <div className="field">
+              <p className="field-label">อุปกรณ์ / อะไหล่ที่ใช้</p>
+              {isTechnician ? (
+                <textarea
+                  className="field-input"
+                  value={workLog.partsUsed}
+                  onChange={(e) =>
+                    setWorkLog((prev) => ({ ...prev, partsUsed: e.target.value }))
+                  }
+                  rows={2}
+                  disabled={isClosed}
+                />
+              ) : (
+                <p className="field-value">
+                  {job.techPartsUsed || job.partsUsed || "-"}
+                </p>
+              )}
             </div>
             <div className="worklog-photo">
               <p className="field-label">ภาพประกอบหน้างาน</p>
@@ -355,18 +479,77 @@ export default function JobDetail() {
             <div className="field-grid two-col">
               <div className="field">
                 <p className="field-label">สถานะงาน</p>
-                <p className="field-value">{job.resultStatus || "-"}</p>
+                {isTechnician ? (
+                  <select
+                    className="field-input"
+                    value={result.status}
+                    onChange={(e) =>
+                      setResult((prev) => ({ ...prev, status: e.target.value }))
+                    }
+                    disabled={isClosed}
+                  >
+                    <option value="">-- เลือกสถานะ --</option>
+                    <option value="สำเร็จ">สำเร็จ</option>
+                    <option value="สำเร็จบางส่วน">สำเร็จบางส่วน</option>
+                    <option value="ไม่สำเร็จ">ไม่สำเร็จ</option>
+                  </select>
+                ) : (
+                  <p className="field-value">
+                    {job.techResultStatus || job.resultStatus || "-"}
+                  </p>
+                )}
               </div>
               <div className="field full">
                 <p className="field-label">สรุปผลการดำเนินงาน</p>
-                <p className="field-value">{job.resultSummary || "-"}</p>
+                {isTechnician ? (
+                  <textarea
+                    className="field-input"
+                    value={result.summary}
+                    onChange={(e) =>
+                      setResult((prev) => ({ ...prev, summary: e.target.value }))
+                    }
+                    rows={3}
+                    disabled={isClosed}
+                  />
+                ) : (
+                  <p className="field-value">
+                    {job.techResultSummary || job.resultSummary || "-"}
+                  </p>
+                )}
               </div>
               <div className="field full">
                 <p className="field-label">งานที่ต้องติดตามต่อ</p>
-                <p className="field-value">{job.followUpTask || "-"}</p>
+                {isTechnician ? (
+                  <textarea
+                    className="field-input"
+                    value={result.nextAction}
+                    onChange={(e) =>
+                      setResult((prev) => ({ ...prev, nextAction: e.target.value }))
+                    }
+                    rows={2}
+                    disabled={isClosed}
+                  />
+                ) : (
+                  <p className="field-value">
+                    {job.techNextAction || job.followUpTask || "-"}
+                  </p>
+                )}
               </div>
             </div>
           </div>
+          {isTechnician && (
+            <div className="job-detail-actions">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleSaveTechnicianSection}
+                disabled={isClosed}
+              >
+                บันทึกบันทึกการดำเนินงาน
+              </button>
+              {saveMessage && <p className="save-message">{saveMessage}</p>}
+            </div>
+          )}
 
           <div className="job-detail-section">
             <p className="job-detail-title">

@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './AppSideBar.css';
 import joblistLogo from '../../pic/joblist-logo.png';
@@ -15,6 +15,7 @@ const adminNav = [
 
 const techNav = [
   { label: 'Dashboard', to: '/tech/dashboard', badge: null, icon: dashboardIcon },
+  { label: 'Joblist', to: '/technician/jobs', badge: null, icon: joblistLogo },
   { label: 'Create Job', to: '/tech/create-job', badge: null, icon: createJobIcon },
   { label: 'Work Sheet', to: '/tech/work-sheet', badge: null },
   { label: 'Print Work Sheet', to: '/tech/work-sheet/print', badge: null },
@@ -30,6 +31,7 @@ const AppSideBar = ({ role }) => {
     role === 'technician' ? techNav : role === 'executive' ? executiveNav : adminNav;
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -47,9 +49,15 @@ const AppSideBar = ({ role }) => {
             <li key={item.label} className="sidebar-nav-item">
               <NavLink
                 to={item.to}
-                className={({ isActive }) =>
-                  `sidebar-link ${isActive ? 'active' : ''}`
-                }
+                className={({ isActive }) => {
+                  const activeForTechList =
+                    role === 'technician' &&
+                    item.to === '/technician/jobs' &&
+                    (location.pathname.startsWith('/technician/jobs') ||
+                      location.pathname.startsWith('/technician/job/'));
+                  const active = isActive || activeForTechList;
+                  return `sidebar-link ${active ? 'active' : ''}`;
+                }}
               >
                 <span className="sidebar-link-main">
                   {item.icon ? (
