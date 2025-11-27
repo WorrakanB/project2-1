@@ -1,0 +1,104 @@
+.job-detail-grid {
+  grid-template-columns: 1fr;
+}
+
+.tech-jobdetail-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1.3fr 0.4fr;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+@media (max-width: 1100px) {
+  .tech-jobdetail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .checkin-col {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .tech-jobdetail-grid {
+    grid-template-columns: 1fr;
+  }
+  .checkin-col {
+    grid-column: span 1;
+  }
+}
+
+.left-col,
+.right-col,
+.checkin-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.checkin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #e6f4f0;
+  border: 1px solid #dcefe6;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 12px rgba(1, 155, 95, 0.12);
+}
+
+.checkin-text {
+  margin: 4px 0 0;
+  color: #0f5132;
+  font-weight: 600;
+}
+
+.checkin-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.checkin-button {
+  background: #019b5f;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(1, 155, 95, 0.25);
+}
+
+.checkin-button:hover {
+  background: #0f8b73;
+}
+
+.checkin-badge {
+  background: #0f8b73;
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.disabledForm {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.tech-card-box {
+  background: #ffffff;
+  border: 1px solid #dcefe6;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(1, 155, 95, 0.1);
+}
+
+.tech-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #019b5f;
+  margin-bottom: 12px;
+}
