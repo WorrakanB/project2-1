@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useJobs } from '../context/JobsContext';
-import './Dashboard.css';
+import './ExecDashboard.css';
 
 const statusPalette = [
   { key: 'new', label: 'New', color: '#1c2632' },
@@ -24,7 +23,6 @@ const formatShortDate = (value) => {
 
 export default function Dashboard() {
   const { jobs } = useJobs();
-  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     department: 'all',
     customer: 'all',
@@ -147,30 +145,6 @@ export default function Dashboard() {
     const max = entries[0]?.count || 0;
     return { entries, max };
   }, [filteredJobs]);
-
-  const pendingTasks = useMemo(() => {
-    const openStatuses = new Set(['new', 'in_progress', 'rejected']);
-    return filteredJobs
-      .filter((job) => openStatuses.has(job.status))
-      .sort((a, b) => {
-        const aDue = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
-        const bDue = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
-        return aDue - bDue;
-      })
-      .slice(0, 5);
-  }, [filteredJobs]);
-
-  const recentOrders = useMemo(
-    () =>
-      [...filteredJobs]
-        .sort((a, b) => {
-          const aOpen = a.openedAt ? new Date(a.openedAt).getTime() : 0;
-          const bOpen = b.openedAt ? new Date(b.openedAt).getTime() : 0;
-          return bOpen - aOpen;
-        })
-        .slice(0, 5),
-    [filteredJobs],
-  );
 
   return (
     <div className="dashboard-page">
@@ -332,93 +306,6 @@ export default function Dashboard() {
         </article>
       </section>
 
-      <section className="two-column">
-        <article className="panel">
-          <div className="panel-header">
-            <p className="panel-title">
-              Today’s Tasks / Action Items ({pendingTasks.length})
-            </p>
-          </div>
-          <div className="task-list">
-            {pendingTasks.length === 0 ? (
-              <p className="chart-empty">ไม่มีงานค้าง</p>
-            ) : (
-              pendingTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="task-row"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate(`/admin/job/${encodeURIComponent(task.id)}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      navigate(`/admin/job/${encodeURIComponent(task.id)}`);
-                    }
-                  }}
-                >
-                  <div className="task-meta">
-                    <p className="task-id">{task.id}</p>
-                    <p className="task-customer">{task.customer || '-'}</p>
-                  </div>
-                  <div className="task-info">
-                    <span className="badge">{task.status}</span>
-                    <span className={`badge ${task.priority?.includes('สูง') ? 'danger' : ''}`}>
-                      Priority: {task.priority || '-'}
-                    </span>
-                  </div>
-                  <button
-                    className="duedate"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    กำหนดส่ง: {formatShortDate(task.dueDate)}
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </article>
-
-        <article className="panel">
-          <div className="panel-header">
-            <p className="panel-title">Recent Work Orders</p>
-          </div>
-          <div className="recent-list">
-            {recentOrders.length === 0 ? (
-              <p className="chart-empty">ยังไม่มีข้อมูลงานล่าสุด</p>
-            ) : (
-              recentOrders.map((item) => (
-                <div
-                  key={item.id}
-                  className="recent-row"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate(`/admin/job/${encodeURIComponent(item.id)}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      navigate(`/admin/job/${encodeURIComponent(item.id)}`);
-                    }
-                  }}
-                >
-                  <div className="recent-main">
-                    <p className="task-id">{item.id}</p>
-                    <p className="task-customer">{item.customer || '-'}</p>
-                    <p className="recent-tech">ประเภท: {item.type || '-'}</p>
-                  </div>
-                  <div className="recent-meta">
-                    <span className="badge neutral">Priority: {item.priority || '-'}</span>
-                    <span className="badge">{item.status}</span>
-                    <span className="timestamp">เปิดงาน: {formatShortDate(item.openedAt)}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </article>
-      </section>
     </div>
   );
 }

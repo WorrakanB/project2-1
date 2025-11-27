@@ -11,6 +11,7 @@ const searchbar = () => {
           placeholder="Search job, client, or tag"
           className="search-input"
         />
+        <button className="sort-btn">sort</button>
         <button className="search-filter-btn">Filters</button>
       </div>
 

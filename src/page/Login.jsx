@@ -12,7 +12,12 @@ const Login = () => {
 
   useEffect(() => {
     if (user) {
-      const target = user.role === 'technician' ? '/tech/dashboard' : '/admin/dashboard';
+      const target =
+        user.role === 'technician'
+          ? '/tech/dashboard'
+          : user.role === 'executive'
+          ? '/executive/dashboard'
+          : '/admin/dashboard';
       navigate(target, { replace: true });
     }
   }, [user, navigate]);
@@ -24,7 +29,11 @@ const Login = () => {
     try {
       const nextUser = login(username.trim(), password);
       const target =
-        nextUser.role === 'technician' ? '/tech/dashboard' : '/admin/dashboard';
+        nextUser.role === 'technician'
+          ? '/tech/dashboard'
+          : nextUser.role === 'executive'
+          ? '/executive/dashboard'
+          : '/admin/dashboard';
       navigate(target, { replace: true });
     } catch (err) {
       setError(err.message);

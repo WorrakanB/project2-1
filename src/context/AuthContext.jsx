@@ -15,6 +15,12 @@ const USERS = [
     role: 'technician',
     name: 'Technician User',
   },
+  {
+    username: 'exec',
+    password: 'exec123',
+    role: 'executive',
+    name: 'Executive User',
+  },
 ];
 
 export const AuthProvider = ({ children }) => {
@@ -51,4 +57,5 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);

@@ -1,6 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
-import { AuthProvider, useAuth } from './context/AuthContext';
 import AppLayout from './layouts/AppLayOut';
 import Login from './page/Login';
 import JobList from './role admin/JobList';
@@ -9,27 +8,7 @@ import DashboardT from './role technician/TechnicianDashboard';
 // import Report from './role technician/TechnicianReport';
 import CreateWS from './role technician/AdminCreateJobPage';
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const target = user.role === 'technician' ? '/tech/dashboard' : '/admin/dashboard';
-  return <Navigate to={target} replace />;
-};
-
-const ProtectedLayout = ({ requiredRole }) => {
-  const { user } = useAuth();
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <AppLayout role={user.role} />;
-};
+const RedirectToDashboard = () => <Navigate to="/dashboard" replace />;
 
 function App() {
   return (

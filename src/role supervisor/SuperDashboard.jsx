@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useJobs } from '../context/JobsContext';
-import './Dashboard.css';
+import './SuperDashboard.css';
 
 const statusPalette = [
   { key: 'new', label: 'New', color: '#1c2632' },

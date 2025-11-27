@@ -17,7 +17,7 @@
 .search-input {
   flex: 1;
   border-radius: 16px;
-  border: 1px solid rgba(148, 156, 172, 0.4);
+  border: 1px solid #548ACA;
   padding: 14px 18px;
   font-size: 1rem;
   background: #f8f8fc;
@@ -27,12 +27,21 @@
   outline: 2px solid rgba(75, 108, 250, 0.4);
 }
 
-.search-filter-btn {
+.search-filter-btn{
   border: none;
-  background: #111726;
+  background: #548ACA;
   color: #fff;
   border-radius: 14px;
-  padding: 12px 22px;
+  padding: 12px 40px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sort-btn{
+   border: none;
+  background: #548ACA;
+  color: #fff;
+  border-radius: 14px;
+  padding: 12px 30px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -66,6 +75,11 @@
   background: #111726;
   color: #fff;
   border-color: #111726;
+}
+.search-filter-btn:hover,.sort-btn:hover {
+  background: #ffffff;
+   color: #8C8C8C;
+   
 }
 
 
