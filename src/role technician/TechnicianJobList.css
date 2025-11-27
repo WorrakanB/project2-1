@@ -1,0 +1,206 @@
+/* Technician Job List */
+:root {
+  --tech-bg: #f4f7f5;
+  --tech-card: #ffffff;
+  --tech-border: #d8e7dd;
+  --tech-accent: #019b5f;
+  --tech-accent-strong: #0f8b73;
+  --tech-muted: #6b7280;
+  --tech-shadow: 0 8px 18px rgba(1, 155, 95, 0.12);
+}
+
+.tech-joblist-page {
+  background: var(--tech-bg);
+  min-height: 100vh;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: #0f1f18;
+}
+
+.tech-joblist-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: var(--tech-accent-strong);
+}
+
+.tech-joblist-header .eyebrow {
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tech-muted);
+  font-size: 0.85rem;
+}
+
+.tech-filter-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--tech-card);
+  border: 1px solid var(--tech-border);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: var(--tech-shadow);
+}
+
+.tech-search {
+  flex: 1;
+  border: 1px solid var(--tech-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  background: #f8fbf8;
+}
+
+.tech-search:focus {
+  outline: none;
+  border-color: var(--tech-accent-strong);
+  box-shadow: 0 0 0 2px rgba(1, 155, 95, 0.15);
+  background: #fff;
+}
+
+.tech-select {
+  border: 1px solid var(--tech-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  background: #fff;
+  color: var(--tech-accent-strong);
+  font-weight: 700;
+}
+
+.tech-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+}
+
+.tech-column {
+  background: var(--tech-card);
+  border: 1px solid var(--tech-border);
+  border-radius: 14px;
+  box-shadow: var(--tech-shadow);
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+}
+
+.tech-column-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--tech-border);
+}
+
+.tech-column-title {
+  margin: 0;
+  font-weight: 800;
+  color: var(--tech-accent-strong);
+}
+
+.tech-column-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tech-job-card {
+  border: 1px solid var(--tech-border);
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.tech-job-card:hover {
+  border-color: var(--tech-accent);
+  box-shadow: 0 10px 20px rgba(1, 155, 95, 0.18);
+  transform: translateY(-2px);
+}
+
+.tech-job-id {
+  margin: 0 0 4px;
+  font-weight: 800;
+  color: var(--tech-accent-strong);
+  font-size: 1.05rem;
+}
+
+.tech-job-customer {
+  margin: 0;
+  color: #334155;
+  font-weight: 700;
+}
+
+.tech-job-title {
+  margin: 4px 0 8px;
+  color: var(--tech-muted);
+  font-size: 0.95rem;
+}
+
+.tech-job-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tech-pill,
+.tech-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  border: 1px solid var(--tech-border);
+  background: #f5fbf7;
+  color: var(--tech-accent-strong);
+}
+
+.tech-pill.neutral {
+  background: #f2f4f7;
+  color: #475467;
+  border-color: #e4e7ec;
+}
+
+.tech-priority.high {
+  background: #ffe8e5;
+  color: #d14333;
+  border-color: #ffc1b6;
+}
+
+.tech-priority.medium {
+  background: #fff5e5;
+  color: #b96b16;
+  border-color: #f7d190;
+}
+
+.tech-priority.low {
+  background: #e8f6ef;
+  color: #0f8b73;
+  border-color: #bfe4cc;
+}
+
+.tech-empty {
+  margin: 0;
+  color: var(--tech-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 10px 6px;
+}
+
+@media (max-width: 720px) {
+  .tech-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tech-board {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(220px, 1fr);
+    overflow-x: auto;
+  }
+}
